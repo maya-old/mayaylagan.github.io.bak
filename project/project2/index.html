@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Rey Ylagan" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 2: Modeling, Testing, and Predicting</title>
+    <meta name="generator" content="Hugo 0.83.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>With the ongoing pandemic I absorb statistics about the state of the virus, and to verify this information I went to HealthData.gov and found their Community Profile Report (CPR) – County-Level. The following is some information on the dataset based on its documentation. It was developed by Data Strategy and Execution Workgroup in the Joint Coordination Cell, under the White House COVID-19 Team. Each observation in the dataset is county-level. It contains daily snapshot in time that focuses on recent COVID-19 outcomes in the last seven days and changes relative to the week prior.</p>
+<hr />
+</div>
+<div id="package-and-data-import" class="section level1">
+<h1>Package and Data import</h1>
+<div id="packages" class="section level4">
+<h4>Packages</h4>
+<pre class="r"><code>library(tidyverse)
+library(mvtnorm)
+library(ggExtra)
+library(rstatix)
+library(sandwich)
+library(lmtest)
+library(interactions)
+library(plotROC)</code></pre>
+</div>
+<div id="data" class="section level4">
+<h4>Data</h4>
+<pre class="r"><code>FullCovid &lt;- read_csv(&quot;COVID-19_Community_Profile_Report_-_County-Level.csv&quot;) 
+CovidData &lt;- FullCovid %&gt;% 
+  mutate( highCases = total_cases&gt;median(total_cases,na.rm=T) ) %&gt;% 
+  mutate( region=recode(state, ME=&quot;NE&quot;, MA=&quot;NE&quot;, RI=&quot;NE&quot;, CT=&quot;NE&quot;, NH=&quot;NE&quot;, VT=&quot;NE&quot;, NY=&quot;NE&quot;, PA=&quot;NE&quot;, NJ=&quot;NE&quot;, DE=&quot;NE&quot;, MD=&quot;NE&quot;, DC=&quot;NE&quot;, PR=&quot;SE&quot;, WV=&quot;SE&quot;, VA=&quot;SE&quot;, KY=&quot;SE&quot;, TN=&quot;SE&quot;, NC=&quot;SE&quot;, SC=&quot;SE&quot;, GA=&quot;SE&quot;, AL=&quot;SE&quot;, MS=&quot;SE&quot;, AR=&quot;SE&quot;, LA=&quot;SE&quot;, FL=&quot;SE&quot;, OH=&quot;MW&quot;, IN=&quot;MW&quot;, MI=&quot;MW&quot;, IL=&quot;MW&quot;, MO=&quot;MW&quot;, WI=&quot;MW&quot;, MN=&quot;MW&quot;, IA=&quot;MW&quot;, KS=&quot;MW&quot;, NE=&quot;MW&quot;, SD=&quot;MW&quot;, ND=&quot;MW&quot;, TX=&quot;SW&quot;, OK=&quot;SW&quot;, NM=&quot;SW&quot;, AZ=&quot;SW&quot;, CO=&quot;W&quot;, WY=&quot;W&quot;, MT=&quot;W&quot;, ID=&quot;W&quot;, WA=&quot;W&quot;, OR=&quot;W&quot;, UT=&quot;W&quot;, NV=&quot;W&quot;, CA=&quot;W&quot;, AK=&quot;W&quot;, HI=&quot;W&quot;) ) %&gt;% 
+  select(fips, county, region, highCases, everything(), -state,-fema_region)</code></pre>
+<hr />
+</div>
+</div>
+<div id="manova" class="section level1">
+<h1>MANOVA</h1>
+<div id="manova-1" class="section level2">
+<h2>MANOVA</h2>
+<pre class="r"><code>man1&lt;-manova(cbind(total_cases,total_deaths, cases_last_7_days, deaths_last_7_days, test_positivity_rate_last_7_days, confirmed_covid_hosp_last_7_days)~region, data=CovidData)
+summary(man1)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## region 4 0.15215 15.882 24 9640 &lt; 2.2e-16 ***
+## Residuals 2412
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p><em>Total cases, total deaths, cases the last 7 days, deaths the last 7 days, test positivity rate the last 7 days, and confirmed covid hospitalizations show a mean difference across different regions of the US. </em></p>
+<div id="univariate-anovas" class="section level3">
+<h3>Univariate ANOVAs</h3>
+<pre class="r"><code>summary.aov(man1)</code></pre>
+<pre><code>## Response total_cases :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## region 4 7.0150e+10 1.7538e+10 19.705 5.634e-16 ***
+## Residuals 2412 2.1467e+12 8.8999e+08
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response total_deaths :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## region 4 52634377 13158594 39.151 &lt; 2.2e-16 ***
+## Residuals 2412 810675863 336101
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response cases_last_7_days :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## region 4 24209477 6052369 30.236 &lt; 2.2e-16 ***
+## Residuals 2412 482815519 200172
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response deaths_last_7_days :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## region 4 3715 928.81 26.256 &lt; 2.2e-16 ***
+## Residuals 2412 85324 35.37
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response test_positivity_rate_last_7_days :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## region 4 0.0651 0.0162849 8.5578 7.436e-07 ***
+## Residuals 2412 4.5899 0.0019029
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response confirmed_covid_hosp_last_7_days :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## region 4 195759 48940 23.928 &lt; 2.2e-16 ***
+## Residuals 2412 4933260 2045
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## 855 observations deleted due to missingness</code></pre>
+<p><em>Each of the afore mentioned predictor variables illustrate a mean difference across groups</em></p>
+</div>
+<div id="post-hoc-t-tests" class="section level3">
+<h3>Post-hoc t-tests</h3>
+<pre class="r"><code>#Total Cases
+pairwise.t.test(CovidData$total_cases, CovidData$region, p.adj=&quot;none&quot;)$p.value*67 &gt;0.05</code></pre>
+<pre><code>##       MW    NE    SE   SW
+## NE FALSE    NA    NA   NA
+## SE  TRUE FALSE    NA   NA
+## SW  TRUE FALSE  TRUE   NA
+## W  FALSE  TRUE FALSE TRUE</code></pre>
+<pre class="r"><code>#Total Deaths
+pairwise.t.test(CovidData$total_deaths, CovidData$region, p.adj=&quot;none&quot;)$p.value *67 &gt;0.05</code></pre>
+<pre><code>##       MW    NE   SE   SW
+## NE FALSE    NA   NA   NA
+## SE  TRUE FALSE   NA   NA
+## SW  TRUE FALSE TRUE   NA
+## W   TRUE FALSE TRUE TRUE</code></pre>
+<pre class="r"><code>#Cases in the Last 7 Days
+pairwise.t.test(CovidData$cases_last_7_days, CovidData$region, p.adj=&quot;none&quot;)$p.value *67 &gt;0.05</code></pre>
+<pre><code>##       MW    NE   SE   SW
+## NE FALSE    NA   NA   NA
+## SE  TRUE FALSE   NA   NA
+## SW  TRUE FALSE TRUE   NA
+## W   TRUE FALSE TRUE TRUE</code></pre>
+<pre class="r"><code>#Deaths int the Last 7 Days
+pairwise.t.test(CovidData$deaths_last_7_days, CovidData$region, p.adj=&quot;none&quot;)$p.value *67 &gt;0.05</code></pre>
+<pre><code>##       MW    NE   SE   SW
+## NE FALSE    NA   NA   NA
+## SE  TRUE FALSE   NA   NA
+## SW  TRUE FALSE TRUE   NA
+## W   TRUE FALSE TRUE TRUE</code></pre>
+<pre class="r"><code>#Test Positivity Rate in the Last 7 Days
+pairwise.t.test(CovidData$test_positivity_rate_last_7_days, CovidData$region, p.adj=&quot;none&quot;)$p.value *67 &gt;0.05</code></pre>
+<pre><code>##       MW    NE    SE   SW
+## NE  TRUE    NA    NA   NA
+## SE FALSE FALSE    NA   NA
+## SW FALSE  TRUE FALSE   NA
+## W   TRUE  TRUE FALSE TRUE</code></pre>
+<pre class="r"><code>#Confirmed Covid Hospitalization in the last 7 Days
+pairwise.t.test(CovidData$confirmed_covid_hosp_last_7_days, CovidData$region, p.adj=&quot;none&quot;)$p.value *67 &gt;0.05</code></pre>
+<pre><code>##       MW    NE   SE   SW
+## NE FALSE    NA   NA   NA
+## SE  TRUE FALSE   NA   NA
+## SW  TRUE FALSE TRUE   NA
+## W   TRUE FALSE TRUE TRUE</code></pre>
+<p><em>The above matricies illustrate which group means significantly differ by region and by predictor variable (accounting for the change in significance level mentioned below)</em></p>
+</div>
+</div>
+<div id="significance-levelα" class="section level2">
+<h2>Significance level(α)</h2>
+<pre class="r"><code>1-(0.95)^67</code></pre>
+<pre><code>## [1] 0.9678277</code></pre>
+<pre class="r"><code>0.05/67</code></pre>
+<pre><code>## [1] 0.0007462687</code></pre>
+<p><em>With 6 numeric predictors and 5 catagorical groups, 67 inference tests were done. This creates a 96.8% chance of having a Type-1 Error. Thus a Bonferroni correction will be done to reduce the 0.05 signifcance level to 0.00075 (7.5e-4). </em></p>
+</div>
+<div id="manova-assumptions" class="section level2">
+<h2>MANOVA assumptions</h2>
+<pre class="r"><code>group &lt;- CovidData %&gt;% na.omit() %&gt;% select(region) %&gt;% mutate(region = as.factor(region))
+DVs &lt;- CovidData %&gt;% na.omit() %&gt;% select(total_cases,total_deaths, cases_last_7_days, deaths_last_7_days, test_positivity_rate_last_7_days, confirmed_covid_hosp_last_7_days) 
+
+#Test multivariate normality for each group (null: normality met)
+sapply(split(DVs,group), mshapiro_test)</code></pre>
+<pre><code>## MW NE SE SW W
+## statistic 0.3448927 0.6079596 0.4318576 0.3509059
+0.2546133
+## p.value 2.090146e-26 1.314466e-17 1.098895e-28
+1.170625e-16 3.080355e-16</code></pre>
+<p><em>The MANOVA fails the first assumption of normality, the other many other assumptions to check that are harder to meet such as Homogeneity of within-group covariance, Linear relationships among DVs, and the absense of outliers. </em></p>
+<hr />
+</div>
+</div>
+<div id="randomization-test" class="section level1">
+<h1>Randomization test</h1>
+<pre class="r"><code>randData &lt;- CovidData %&gt;% na.omit() %&gt;% select(test_positivity_rate_last_7_days,cases_last_7_days)
+sampleCor &lt;- cor(randData$test_positivity_rate_last_7_days, randData$cases_last_7_days)
+
+rand_dist&lt;-vector()
+for(i in 1:5000){
+  new&lt;-data.frame(positives=sample(randData$test_positivity_rate_last_7_days),cases=randData$cases_last_7_days) 
+  rand_dist[i]&lt;- cor(new$positives, new$cases)
+}
+
+ggplot( data.frame(rand_dist), aes(x=rand_dist) ) + 
+  geom_histogram() +
+  geom_vline(aes(xintercept=sampleCor), color=&quot;red&quot;)</code></pre>
+<p><img src="../../project/RRYProject2_files/figure-html/unnamed-chunk-8-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>pval &lt;- mean(rand_dist&gt;sampleCor | rand_dist &lt; -sampleCor)
+pval</code></pre>
+<pre><code>## [1] 0</code></pre>
+<p><em>The Null Hypothesis is that there is no correlation between positive test rate in the past 7 days and the number of cases the past 7 days. The null distribution of the correlation coefficient is illustrated in dark grey, and the in-sample correlation coefficient is the red vertical line. The probability of a value as extreme as the in-sample value under this “randomization distribution” is 0, therefore we reject the null hypothesis that there is no correlation between these 2 variables. </em></p>
+<hr />
+</div>
+<div id="linear-regression-model" class="section level1">
+<h1>Linear Regression Model:</h1>
+<div id="creating-and-interpreting" class="section level3">
+<h3>Creating and Interpreting</h3>
+<pre class="r"><code>lmData &lt;- CovidData %&gt;% 
+  select( cases_last_7_days, test_positivity_rate_last_7_days, confirmed_covid_hosp_last_7_days ) %&gt;% 
+  mutate( posRate = test_positivity_rate_last_7_days-mean(test_positivity_rate_last_7_days,na.rm=T) ) %&gt;% 
+  mutate( confirmHosp = confirmed_covid_hosp_last_7_days-mean(CovidData$confirmed_covid_hosp_last_7_days,na.rm=T) )
+
+
+fit&lt;-lm(cases_last_7_days~posRate*confirmHosp, data=lmData)
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = cases_last_7_days ~ posRate * confirmHosp,
+data = lmData)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -2039.63 -33.24 -14.33 1.47 2708.79
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 152.9680 3.9324 38.899 &lt; 2e-16 ***
+## posRate 431.0901 90.5095 4.763 2.02e-06 ***
+## confirmHosp 8.6846 0.1005 86.457 &lt; 2e-16 ***
+## posRate:confirmHosp 11.9381 2.1726 5.495 4.32e-08 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 192.2 on 2413 degrees of
+freedom
+## (855 observations deleted due to missingness)
+## Multiple R-squared: 0.8242, Adjusted R-squared: 0.824
+## F-statistic: 3771 on 3 and 2413 DF, p-value: &lt; 2.2e-16</code></pre>
+<p><em>Given average test positivity rate over the last 7 days and average confirmed covid hospitalizations over the last 7 days the predicted value of cases the last 7 days is 398.7656 cases</em></p>
+<p><em>1197.4981 is the slope for test positivity rate over the last 7 days on cases the last 7 days while holding confirmed covid hospitalizations over the last 7 days constant</em></p>
+<p><em>8.5943 is the slope for confirmed covid hospitalizations over the last 7 days on cases the last 7 days while holding test positivity rate over the last 7 days constant</em></p>
+<p><em>The effect of positivity rate over the last 7 days is 10.5941 cases higher for every percent above the mean positivity rate over the last 7 days</em></p>
+<p><em>This linear model explain 81.42% of varience in cases the last 7 days </em></p>
+</div>
+<div id="plot-of-the-interaction" class="section level3">
+<h3>Plot of the Interaction</h3>
+<pre class="r"><code>interact_plot(fit, confirmHosp, posRate, plot.points = T)</code></pre>
+<p><img src="../../project/RRYProject2_files/figure-html/unnamed-chunk-10-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+<div id="linear-model-assumptions" class="section level3">
+<h3>Linear Model Assumptions</h3>
+<pre class="r"><code>#Normality
+shapiro.test(fit$residuals) #H0: true distribution is normal</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  fit$residuals
+## W = 0.49026, p-value &lt; 2.2e-16</code></pre>
+<pre class="r"><code>#Homoskedasticity
+ggplot() + geom_point(aes(x=fit$fitted.values,y=fit$residuals))</code></pre>
+<p><img src="../../project/RRYProject2_files/figure-html/unnamed-chunk-11-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>bptest(fit) # H0: homoskedastic</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 979.38, df = 3, p-value &lt; 2.2e-16</code></pre>
+<p><em>This linear model fails normality and homoscedasticity </em></p>
+</div>
+<div id="robust-standard-errors" class="section level3">
+<h3>Robust standard errors</h3>
+<pre class="r"><code>coeftest(fit, vcov=vcovHC(fit))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 152.96796 5.23374 29.2273 &lt; 2e-16 ***
+## posRate 431.09008 170.74945 2.5247 0.01164 *
+## confirmHosp 8.68462 0.69314 12.5295 &lt; 2e-16 ***
+## posRate:confirmHosp 11.93807 14.54385 0.8208 0.41182
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p><em>Because the model failed homoskeydacity robust SE were used The robust SE changed the significance of the interaction, increased the positivity rate p-value, but not above 0.05, and decreased all t values.</em></p>
+<pre class="r"><code>samp_distn&lt;-replicate(5000, {  
+  boot_dat &lt;- sample_frac(lmData, replace=T) #take bootstrap sample of rows  
+  bootfit &lt;- lm(cases_last_7_days~posRate*confirmHosp, data=boot_dat) #fit model on bootstrap sample  
+  coef(bootfit) #save coefs
+}) 
+
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept)  posRate confirmHosp posRate:confirmHosp
+## 1    5.130708 170.1034   0.6441674            14.95694</code></pre>
+<p><em>The bootstrapped SEs are very similar to robust SE and much higher than the original SE, illustrating the robust SE are a more accurate measure of the sample than than the original SE</em></p>
+<hr />
+</div>
+</div>
+<div id="logistic-regression-models" class="section level1">
+<h1>Logistic Regression Models:</h1>
+<div id="logistic-model-with-2-predictors" class="section level2">
+<h2>Logistic Model with 2 predictors</h2>
+<div id="creating-and-interpreting-1" class="section level3">
+<h3>Creating and Interpreting</h3>
+<pre class="r"><code>fit2 &lt;- glm(highCases~cases_last_7_days+total_deaths, data=CovidData, family=&quot;binomial&quot;)
+summary(fit2)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = highCases ~ cases_last_7_days +
+total_deaths, family = &quot;binomial&quot;,
+## data = CovidData)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -8.4904 -0.4091 -0.0024 0.1299 6.7658
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -3.810729 0.137967 -27.62 &lt;2e-16 ***
+## cases_last_7_days 0.036071 0.002675 13.48 &lt;2e-16 ***
+## total_deaths 0.055663 0.002484 22.41 &lt;2e-16 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 4534.6 on 3270 degrees of freedom
+## Residual deviance: 1585.5 on 3268 degrees of freedom
+## (1 observation deleted due to missingness)
+## AIC: 1591.5
+##
+## Number of Fisher Scoring iterations: 11</code></pre>
+<pre class="r"><code>exp(fit2$coefficients)</code></pre>
+<pre><code>##       (Intercept) cases_last_7_days      total_deaths 
+##        0.02213204        1.03672930        1.05724118</code></pre>
+<p><em>Given the above model’s coefficients: for every 1 unit increase in cases in the last 7 days the odds of highCases incrase by 1.01, and for every 1 unit increase in total deaths the odss of highCases increase by 1.02</em></p>
+</div>
+<div id="confusion-matrix" class="section level3">
+<h3>Confusion Matrix</h3>
+<pre class="r"><code>CovidData &lt;- CovidData %&gt;% filter( complete.cases(CovidData$highCases),complete.cases(CovidData$cases_last_7_days),complete.cases(CovidData$total_deaths) )
+
+table(Predicted = (predict(fit2,type=&quot;response&quot;)&gt;0.5) , Actual = as.numeric(CovidData$highCases)) %&gt;% addmargins</code></pre>
+<pre><code>##          Actual
+## Predicted    0    1  Sum
+##     FALSE 1538  200 1738
+##     TRUE    98 1435 1533
+##     Sum   1636 1635 3271</code></pre>
+<pre class="r"><code>class_diag&lt;-function(probs,truth){
+  
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+  
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+probs &lt;- predict(fit2)
+
+class_diag(probs, CovidData$highCases)</code></pre>
+<pre><code>##            acc      sens      spec       ppv       auc
+## TRUE 0.8994191 0.8348624 0.9639364 0.9585674 0.9720858</code></pre>
+<p><em>See the above table and confusion matrix for diagnostic values of the logistic model with 2 predictors</em></p>
+</div>
+<div id="density-plot" class="section level3">
+<h3>Density Plot</h3>
+<pre class="r"><code>densityVal &lt;- CovidData %&gt;% mutate(logit=fit2$fitted.values )
+
+ggplot(densityVal, aes(x=logit, fill=highCases)) + geom_density(alpha=.5)</code></pre>
+<p><img src="../../project/RRYProject2_files/figure-html/unnamed-chunk-16-1.png" width="768" style="display: block; margin: auto;" />
+<em>The above density plot illustrates the predictor value (logit) compared to the actual group membership to highCases</em></p>
+</div>
+<div id="roc-and-auc" class="section level3">
+<h3>ROC and AUC</h3>
+<pre class="r"><code>ROCplot&lt;-ggplot(CovidData)+geom_roc(aes(d=highCases,m=cases_last_7_days+total_deaths), n.cuts=0) 
+ROCplot</code></pre>
+<p><img src="../../project/RRYProject2_files/figure-html/unnamed-chunk-17-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.9704336</code></pre>
+<p><em>The above ROC curve is of the logistic model with 2 predictors. Based on the shape of the ROC curve and the AUC of the aforementioned curve, the classification of this 2 predictor logistical model is very good. </em></p>
+</div>
+</div>
+<div id="logistic-model-with-all-predictors" class="section level2">
+<h2>Logistic Model with all predictors</h2>
+<div id="creating-and-interpreting-2" class="section level3">
+<h3>Creating and Interpreting</h3>
+<pre class="r"><code>lassoData &lt;- CovidData %&gt;% select(-fips, -county,-date) %&gt;% na.omit
+fit3 &lt;- lm(highCases~(.), data=lassoData)
+probs &lt;- predict(fit3,data=CovidData)
+class_diag(probs, lassoData$highCases)</code></pre>
+<pre><code>##            acc sens       spec       ppv       auc
+## TRUE 0.9338624    1 0.01960784 0.9337748 0.9359477</code></pre>
+<p><em>From including all variables the model was made more flexible, but had lower values for Accuracy, Sensitivity, and AUC, as there was more noise introduced. </em></p>
+</div>
+<div id="fold-cross-validation" class="section level3">
+<h3>10 Fold Cross Validation</h3>
+<pre class="r"><code>k=10
+
+cvData&lt;-lassoData[sample(nrow(lassoData)),] #randomly order rows
+folds&lt;-cut(seq(1:nrow(lassoData)),breaks=k,labels=F) #create folds
+
+diags&lt;-NULL
+for(i in 1:k){
+  ## Create training and test sets  
+  train&lt;-cvData[folds!=i,]   
+  test&lt;-cvData[folds==i,]  
+  truth&lt;-test$highCases ## Truth labels for fold i
+  
+  ## Train model on training set (all but fold i)  
+  lassofit&lt;-glm(highCases~(.),data=train,family=&quot;binomial&quot;)
+  
+  ## Test model on test set (fold i)   
+  probs&lt;-predict(lassofit,newdata = test,type=&quot;response&quot;)
+  
+  ## Get diagnostics for fold i  
+  diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+
+summarize_all(diags,mean) #average diagnostics across all k folds</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.9629474 0.9814584 0.7230952 0.9786964 0.9034337</code></pre>
+<p><em>There is no sign of overfitting the more flexible model, with all predictors, as the AUC in 10 Fold Cross Validation was surprisingly higher for out-of-sample AUC than for the in-sample AUC. </em></p>
+</div>
+<div id="lasso" class="section level3">
+<h3>LASSO</h3>
+<pre class="r"><code>library(glmnet)
+
+y&lt;-as.matrix(lassoData$highCases) #grab response
+x&lt;-model.matrix(highCases~(.),data=lassoData)[,-1] #grab predictors
+
+cv&lt;-cv.glmnet(x,y,family=&quot;binomial&quot;)
+lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 37 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+## s0
+## (Intercept) -1.070618e+01
+## regionNE 7.734075e-01
+## regionSE .
+## regionSW 3.528254e+00
+## regionW 1.892001e+00
+## cases_last_7_days .
+## cases_per_100k_last_7_days 7.244638e-04
+## total_cases 1.408761e-03
+## cases_pct_change_from_prev_week -3.059423e-01
+## deaths_last_7_days .
+## deaths_per_100k_last_7_days -1.483196e-02
+## total_deaths 3.503220e-02
+## deaths_pct_change_from_prev_week -4.070334e-01
+## test_positivity_rate_last_7_days 1.241021e+00
+## total_positive_tests_last_7_days .
+## total_tests_last_7_days 4.095476e-04
+## total_tests_per_100k_last_7_days -8.988997e-05
+## test_positivity_rate_pct_change_from_prev_week
+1.562493e+00
+## total_tests_pct_change_from_prev_week -3.511964e-01
+## confirmed_covid_hosp_last_7_days -1.363544e-02
+## confirmed_covid_hosp_per_100_beds_last_7_days
+5.953476e-03
+##
+confirmed_covid_hosp_per_100_beds_pct_change_from_prev_week
+3.750425e-01
+## suspected_covid_hosp_last_7_days -1.544227e-02
+## suspected_covid_hosp_per_100_beds_last_7_days
+4.311288e-03
+##
+suspected_covid_hosp_per_100_beds_pct_change_from_prev_week
+-8.461705e-02
+## pct_inpatient_beds_used_avg_last_7_days 6.410423e-01
+## pct_inpatient_beds_used_abs_change_from_prev_week
+-1.937284e+00
+## pct_inpatient_beds_used_covid_avg_last_7_days .
+## pct_inpatient_beds_used_covid_abs_change_from_prev_week
+.
+## pct_icu_beds_used_avg_last_7_days 2.790121e+00
+## pct_icu_beds_used_abs_change_from_prev_week 1.715033e+00
+## pct_icu_beds_used_covid_avg_last_7_days -5.990397e+00
+## pct_icu_beds_used_covid_abs_change_from_prev_week
+-1.932628e-01
+## pct_vents_used_avg_last_7_days 3.371578e+00
+## pct_vents_used_abs_change_from_prev_week -2.618595e+00
+## pct_vents_used_covid_avg_last_7_days 1.012240e+01
+## pct_vents_used_covid_abs_change_from_prev_week
+-1.580255e+00</code></pre>
+<pre class="r"><code>newLassoData &lt;- lassoData %&gt;% mutate(regionNE=(region==&quot;NE&quot;))  %&gt;% mutate(regionSW=(region==&quot;SW&quot;)) %&gt;% mutate(regionSE=(region==&quot;SE&quot;))
+
+lassoSelectedVarFunction &lt;- highCases~regionNE+
+                  regionSE+
+                  regionSW+
+                  cases_per_100k_last_7_days+
+                  total_cases+
+                  cases_pct_change_from_prev_week+
+                  deaths_per_100k_last_7_days+
+                  deaths_pct_change_from_prev_week+
+                  test_positivity_rate_last_7_days+
+                  test_positivity_rate_pct_change_from_prev_week+
+                  total_tests_pct_change_from_prev_week+
+                  confirmed_covid_hosp_per_100_beds_last_7_days+
+                  confirmed_covid_hosp_per_100_beds_pct_change_from_prev_week+
+                  suspected_covid_hosp_last_7_days+
+                  suspected_covid_hosp_per_100_beds_pct_change_from_prev_week+
+                  pct_inpatient_beds_used_avg_last_7_days+
+                  pct_inpatient_beds_used_covid_avg_last_7_days+
+                  pct_inpatient_beds_used_covid_abs_change_from_prev_week+
+                  pct_icu_beds_used_avg_last_7_days+
+                  pct_icu_beds_used_abs_change_from_prev_week+
+                  pct_icu_beds_used_covid_avg_last_7_days+
+                  pct_icu_beds_used_covid_abs_change_from_prev_week+
+                  pct_vents_used_avg_last_7_days+
+                  pct_vents_used_covid_abs_change_from_prev_week</code></pre>
+<p><em>The variables that were selected by LASSO were those that increased the ability of the model to predict highCases and did not add extra noise in the data for the model to learn.</em></p>
+</div>
+<div id="cv-with-lasso-vars" class="section level3">
+<h3>CV with LASSO Vars</h3>
+<pre class="r"><code>######## IN-SAMPLE ########
+fitLasso &lt;- glm(lassoSelectedVarFunction, data=newLassoData)
+probs &lt;- predict(fitLasso)
+class_diag(probs, newLassoData$highCases)</code></pre>
+<pre><code>##            acc sens       spec       ppv      auc
+## TRUE 0.9338624    1 0.01960784 0.9337748 0.922848</code></pre>
+<pre class="r"><code>######## OUT-OF-SAMPLE ########
+k=10
+cvData&lt;-newLassoData[sample(nrow(newLassoData)),] #randomly order rows
+folds&lt;-cut(seq(1:nrow(newLassoData)),breaks=k,labels=F) #create folds
+
+diags&lt;-NULL
+for(i in 1:k){
+  ## Create training and test sets  
+  train&lt;-cvData[folds!=i,]   
+  test&lt;-cvData[folds==i,]  
+  truth&lt;-test$highCases ## Truth labels for fold i
+ 
+  lassofit&lt;-glm(lassoSelectedVarFunction,data=train,family=&quot;binomial&quot;)  ## Train model on training set (all but fold i)  
+  probs&lt;-predict(lassofit,newdata = test,type=&quot;response&quot;) ## Test model on test set (fold i)   
+  diags&lt;-rbind(diags,class_diag(probs,truth))  ## Get diagnostics for fold i
+}
+
+summarize_all(diags,mean) #average diagnostics across all k folds</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.9814211 0.9885461 0.9046429 0.9914872 0.9960423</code></pre>
+<p><em>Using the variables that LASSO selected, the model’s out-of-sample AUC is higher than the model’s in-sample AUC</em></p>
+</div>
+</div>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

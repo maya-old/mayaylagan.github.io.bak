@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Chris Turner</title>
+    <link>/post/</link>
+    <description>Recent content in Posts on Chris Turner</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Fri, 07 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Hello (again)</title>
+      <link>/post/2021/05/07/hello-again/</link>
+      <pubDate>Fri, 07 May 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021/05/07/hello-again/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>HelloWorld</title>
+      <link>/post/2015/07/23/helloworld/</link>
+      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
+      
+      <guid>/post/2015/07/23/helloworld/</guid>
+      <description> Blog Post 1 Link to project 1
+Link to google
+ </description>
+    </item>
+    
+  </channel>
+</rss>
