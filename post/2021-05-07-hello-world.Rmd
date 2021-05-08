@@ -1,0 +1,84 @@
+---
+title: Hello Python & R
+author: Rey Ylagan
+date: '2021-05-07'
+slug: hello-world
+categories:
+  - R
+  - Python
+tags:
+  - Reticulate
+description: 'Learning how to incororate R and Python'
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+
+```
+
+
+```{r}
+library(reticulate)
+```
+Today we will be learning the reticulate packedge in R and how to use Python in the same R Markdown file! 
+
+### Variable Assignment
+```{r}
+#This is a R Code Chunk
+R_Var <- "Hello I was made in R"
+```
+Here is a variable assignment in R
+
+
+```{python}
+#This is a Python Code Chunk
+Py_Var = "Heyo I was made in Python"
+```
+Here is variable assignment in Python
+
+
+### Acessing Different Variables 
+```{python}
+#Python Code Chunk
+print(r.R_Var)
+print(Py_Var)
+```
+*We can acess both R and Python variables together the same code chunk! In a Python Code chunk, to access R variables a prefix of r. is needed: `r.<R-Variable-Name>`*
+
+```{r}
+#R code chunk
+cat( R_Var )
+cat( py$Py_Var )
+```
+*This can also be done in reverse! So if you want to access a Python variable in R, a prefix of py$ is needed: `py$<R-Variable>`*
+
+
+### Example using Reticulate
+For this example we will be getting data input from Python and send it to R for easy plotting using `ggplot2`
+
+I will be using the titanic [dataset](https://github.com/pandas-dev/pandas/blob/master/doc/data/titanic.csv)
+```{python}
+#Python Code Chunk
+import pandas as pd
+titanic = pd.read_csv("titanic.csv")
+titanic.head(8)
+```
+Here we imported the Pandas Module in Python to grab the titanic dataset and store it in a Python variable. 
+
+
+```{R}
+library(tidyverse)
+ggplot(py$titanic, aes(x=Pclass,y=Fare)) +
+  geom_bar(stat="identity", fun=mean)
+```
+Using the Reticulate package in R this Python variable is accessed with the `py$`.  It was then mapped into ggplot to make a quick and easy plot!
+
+
+
+
+
+
+
+

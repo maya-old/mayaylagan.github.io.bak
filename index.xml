@@ -1,30 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Chris Turner</title>
+    <title>Rey Ylagan</title>
     <link>/</link>
-    <description>Recent content on Chris Turner</description>
+    <description>Recent content on Rey Ylagan</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
     <lastBuildDate>Fri, 07 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Hello (again)</title>
-      <link>/post/2021/05/07/hello-again/</link>
+      <title>Hello Python &amp; R</title>
+      <link>/post/2021/05/07/hello-world/</link>
       <pubDate>Fri, 07 May 2021 00:00:00 +0000</pubDate>
       
-      <guid>/post/2021/05/07/hello-again/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>HelloWorld</title>
-      <link>/post/2015/07/23/helloworld/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
-      
-      <guid>/post/2015/07/23/helloworld/</guid>
-      <description> Blog Post 1 Link to project 1
-Link to google
- </description>
+      <guid>/post/2021/05/07/hello-world/</guid>
+      <description>library(reticulate) Today we will be learning the reticulate packedge in R and how to use Python in the same R Markdown file!
+Variable Assignment #This is a R Code Chunk R_Var &amp;lt;- &amp;quot;Hello I was made in R&amp;quot; Here is a variable assignment in R
+#This is a Python Code Chunk Py_Var = &amp;quot;Heyo I was made in Python&amp;quot; Here is variable assignment in Python
+ Acessing Different Variables #Python Code Chunk print(r.</description>
     </item>
     
     <item>
@@ -56,15 +48,6 @@ These datasets were interesting to me as they contained data for the entire nati
  Wrangling &amp;amp; Exploratory Data Analysis
  Modeling, Inference, Prediction
   -- </description>
-    </item>
-    
-    <item>
-      <title>Resume</title>
-      <link>/resume/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/resume/</guid>
-      <description>    </description>
     </item>
     
   </channel>
