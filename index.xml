@@ -13,8 +13,8 @@
       <pubDate>Fri, 07 May 2021 00:00:00 +0000</pubDate>
       
       <guid>/post/2021/05/07/hello-world/</guid>
-      <description>library(reticulate) Today we will be learning the reticulate packedge in R and how to use Python in the same R Markdown file!
-Variable Assignment #This is a R Code Chunk R_Var &amp;lt;- &amp;quot;Hello I was made in R&amp;quot; Here is a variable assignment in R
+      <description>Today we will be learning the reticulate packedge in R and how to use Python in the same R Markdown file!
+library(reticulate) Variable Assignment #This is a R Code Chunk R_Var &amp;lt;- &amp;quot;Hello I was made in R&amp;quot; Here is a variable assignment in R
 #This is a Python Code Chunk Py_Var = &amp;quot;Heyo I was made in Python&amp;quot; Here is variable assignment in Python
  Acessing Different Variables #Python Code Chunk print(r.</description>
     </item>
